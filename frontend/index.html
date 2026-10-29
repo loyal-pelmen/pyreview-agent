@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Ревью Python-файла</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body data-state="empty">
+  <header class="top wrap">
+    <p class="brand"><span class="brand-mark" aria-hidden="true">py</span>Ревью Python-файла</p>
+    <p class="tagline">Линтеры ruff и ty плюс разбор логики агентом</p>
+  </header>
+
+  <main class="wrap">
+    <div id="live" class="sr-only" aria-live="polite"></div>
+
+    <section id="notice" class="notice" role="alert" hidden>
+      <p id="notice-text" class="notice-text"></p>
+      <p id="notice-code" class="notice-code"></p>
+    </section>
+
+    <section id="drop" class="drop" role="button" tabindex="0" aria-labelledby="drop-title" aria-describedby="drop-hint">
+      <div class="drop-gutter" aria-hidden="true">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24</div>
+      <div class="drop-body">
+        <h1 id="drop-title" class="drop-title">Перетащите сюда файл .py</h1>
+        <p id="drop-hint" class="drop-hint">Один файл до <span id="limit">195 КБ</span>. Агент запустит ruff и ty, разберёт логику и покажет, как пришёл к выводам.</p>
+        <span class="btn btn-primary">Выбрать файл</span>
+      </div>
+    </section>
+    <input id="file" type="file" accept=".py" hidden>
+
+    <section id="progress" class="progress" aria-labelledby="progress-file" hidden>
+      <div class="progress-head">
+        <div>
+          <p class="progress-label">Проверяю файл</p>
+          <h1 id="progress-file" class="progress-file"></h1>
+          <p id="progress-meta" class="meta"></p>
+        </div>
+        <p class="timer"><span id="elapsed">0 с</span></p>
+      </div>
+      <p class="hint"><span class="pulse" aria-hidden="true"></span><span id="hint"></span></p>
+      <p class="progress-note">Обычно ревью занимает от 20 секунд до двух минут. Вкладку можно не трогать.</p>
+      <button id="cancel" class="btn" type="button">Отменить</button>
+      <div class="scan" aria-hidden="true"><div id="scan" class="code code-static"></div></div>
+    </section>
+
+    <section id="result" class="result" hidden>
+      <header class="result-head">
+        <div class="result-title">
+          <h1 id="r-name" class="file-name" tabindex="-1"></h1>
+          <p id="r-meta" class="meta"></p>
+        </div>
+        <span id="r-verdict" class="verdict"></span>
+        <div class="actions">
+          <button id="copy" class="btn" type="button">Скопировать как Markdown</button>
+          <button id="again" class="btn btn-primary" type="button">Проверить другой файл</button>
+        </div>
+      </header>
+      <p id="r-summary" class="summary"></p>
+      <div id="r-notes" class="notes"></div>
+
+      <div class="layout">
+        <div class="col">
+          <section class="block" aria-labelledby="h-findings">
+            <h2 id="h-findings" class="block-title">Находки ревью <span id="c-findings" class="count"></span></h2>
+            <ol id="findings" class="findings"></ol>
+          </section>
+          <section class="block" aria-labelledby="h-lint">
+            <h2 id="h-lint" class="block-title">Линтеры <span id="c-lint" class="count"></span></h2>
+            <div id="lint" class="lint"></div>
+          </section>
+          <details id="reasoning-box" class="block reasoning">
+            <summary><h2 class="block-title">Ход рассуждений <span id="c-reasoning" class="count"></span></h2></summary>
+            <ol id="reasoning" class="timeline"></ol>
+          </details>
+          <p id="usage" class="usage"></p>
+        </div>
+        <aside id="code-panel" class="code-panel" aria-label="Код файла">
+          <div class="code-head">
+            <span id="code-name"></span>
+            <span class="legend"><i class="sw sev-bug"></i>баг <i class="sw sev-warning"></i>предупреждение <i class="sw sev-nit"></i>мелочь <i class="sw sw-lint"></i>линтер</span>
+          </div>
+          <div id="code" class="code" tabindex="0" aria-label="Код с номерами строк"></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot wrap">
+    <p>Код и результат живут только в этой вкладке и пропадают при её закрытии.</p>
+    <p id="foot-model"></p>
+  </footer>
+
+  <div class="overlay" aria-hidden="true"><p>Отпустите, чтобы проверить файл</p></div>
+</body>
+</html>
