@@ -1,0 +1,13 @@
+.DS_Store
+.env
+*.local
+secrets/
+.venv/
+__pycache__/
+*.pyc
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.idea/
+LOCAL_SETUP.md

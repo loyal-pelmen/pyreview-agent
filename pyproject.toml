@@ -1,0 +1,78 @@
+[project]
+name = "pyreview"
+version = "0.1.0"
+description = "Ревью Python-файла агентом на Deep Agents и GigaChat"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "fastapi>=0.118.0",
+    "uvicorn[standard]>=0.37.0",
+    "python-multipart>=0.0.20",
+    "deepagents>=0.7.0",
+    "langchain-gigachat>=0.5.0",
+    "langchain>=1.0.0",
+    "pydantic>=2.11.0",
+    "pydantic-settings>=2.11.0",
+    "structlog>=25.4.0",
+    "ruff>=0.14.0",
+    "ty>=0.0.1a21",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.0",
+    "pytest-asyncio>=1.2.0",
+    "httpx>=0.28.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pyreview"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+src = ["src", "tests"]
+extend-exclude = ["tests/fixtures"]
+
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "double"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "B", "A", "C4", "DTZ", "T20", "SIM", "TID", "PTH", "RUF", "ASYNC", "S", "ARG", "PL"]
+ignore = ["PLR0913", "PLR0917", "RUF001", "RUF002", "RUF003", "BLE001"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S311", "S603", "PLR2004", "ARG001", "ARG002", "T20", "TID251"]
+"src/pyreview/*/infrastructure/**" = ["TID251", "ARG002"]
+"src/pyreview/entrypoints/**" = ["TID251"]
+"src/pyreview/ioc.py" = ["TID251"]
+"src/pyreview/main.py" = ["TID251"]
+"src/pyreview/shared/errors.py" = ["N818"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"pyreview.analysis.infrastructure".msg = "Домен и слой приложения не импортируют инфраструктуру: зависимость идёт через порт."
+"pyreview.linters.infrastructure".msg = "Домен и слой приложения не импортируют инфраструктуру: зависимость идёт через порт."
+"pyreview.shared.infrastructure".msg = "Домен и слой приложения не импортируют инфраструктуру: зависимость идёт через порт."
+
+[tool.ruff.lint.isort]
+known-first-party = ["pyreview"]
+
+[tool.ty.src]
+include = ["src", "tests"]
+exclude = ["tests/fixtures"]
+
+[tool.ty.rules]
+unresolved-import = "error"
+invalid-argument-type = "error"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = ["ignore::DeprecationWarning:langsmith.*"]
+addopts = "-q --strict-markers"
+markers = ["integration: требует живого GigaChat"]

@@ -1,0 +1,24 @@
+{
+  "llm": {
+    "provider": "gigachat",
+    "model": "GigaChat-2",
+    "temperature": 0.1,
+    "max_tokens": 4000,
+    "timeout_seconds": 120
+  },
+  "linters": {
+    "ruff": true,
+    "ty": true,
+    "timeout_seconds": 30,
+    "ruff_select": ["E", "F", "W", "B", "UP", "SIM", "C4", "PL", "RUF"]
+  },
+  "limits": {
+    "max_file_bytes": 200000,
+    "max_findings": 30,
+    "max_tool_calls": 20,
+    "analysis_timeout_seconds": 300,
+    "max_prompt_chars": 60000,
+    "max_tool_output_chars": 4000,
+    "max_lint_issues": 200
+  }
+}
