@@ -89,7 +89,9 @@ async def test_oversized_output_kills_process(
 ) -> None:
     pid_file = tmp_path / "pid"
     script = tmp_path / "noisy"
-    script.write_text(f"#!/bin/sh\necho $$ > {pid_file}\nexec yes{redirect}\n")
+    script.write_text(
+        f"#!/bin/sh\necho $$ > {pid_file}\nhead -c 5000000 /dev/zero{redirect}\nexec sleep 30\n"
+    )
     script.chmod(0o755)
     monkeypatch.setattr(_process, "find_binary", lambda _: str(script))
     run = await RuffLinter(select=("F",), timeout_seconds=10).run(write(tmp_path, CLEAN))

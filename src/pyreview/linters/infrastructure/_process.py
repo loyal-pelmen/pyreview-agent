@@ -1,5 +1,8 @@
 import asyncio
+import contextlib
+import os
 import shutil
+import signal
 import sys
 from collections.abc import Callable, Mapping
 from pathlib import Path
@@ -15,16 +18,22 @@ def find_binary(name: str) -> str | None:
     return str(local) if local.is_file() else shutil.which(name)
 
 
+def kill_group(process: asyncio.subprocess.Process) -> None:
+    if process.returncode is None:
+        with contextlib.suppress(ProcessLookupError, PermissionError):
+            os.killpg(process.pid, signal.SIGKILL)
+
+
 async def read_capped(
     process: asyncio.subprocess.Process, stream: asyncio.StreamReader
 ) -> bytes | None:
-    try:
-        await stream.readexactly(OUTPUT_LIMIT + 1)
-    except asyncio.IncompleteReadError as exc:
-        return exc.partial
-    if process.returncode is None:
-        process.kill()
-    return None
+    data = bytearray()
+    while chunk := await stream.read(1 << 16):
+        data += chunk
+        if len(data) > OUTPUT_LIMIT:
+            kill_group(process)
+            return None
+    return bytes(data)
 
 
 async def run_linter(
@@ -48,6 +57,7 @@ async def run_linter(
         stdin=asyncio.subprocess.DEVNULL,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
+        start_new_session=True,
     )
     try:
         stdout, stderr, _ = await asyncio.wait_for(
@@ -62,7 +72,7 @@ async def run_linter(
         return LintRun(tool, (), timed_out=True)
     finally:
         if process.returncode is None:
-            process.kill()
+            kill_group(process)
             await process.wait()
     if stdout is None or stderr is None:
         return LintRun(tool, (), error="Вывод линтера слишком большой.")
