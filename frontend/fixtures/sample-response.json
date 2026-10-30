@@ -1,0 +1,135 @@
+{
+  "file": {
+    "name": "orders.py",
+    "bytes": 1216,
+    "lines": 43
+  },
+  "review": {
+    "verdict": "issues",
+    "summary": "Хранилище заказов в целом читается легко, но в нём две ошибки, которые проявятся на реальных данных: все заказы, созданные без явных тегов, делят один и тот же список, а постраничная выдача теряет первый заказ каждой страницы. Открытие файла без `with` в `load` и неверный второй аргумент `round` в `total` уже нашли ruff и ty, отдельными находками они не дублируются.",
+    "findings": [
+      {
+        "line": 19,
+        "end_line": 23,
+        "severity": "bug",
+        "title": "Все новые заказы делят один список тегов",
+        "detail": "Список `tags` по умолчанию создаётся один раз при определении метода, и `append` в строке 19 мутирует именно его. Все заказы, добавленные без `tags`, ссылаются на один объект: у третьего такого заказа будет три тега `new`, а правка тегов одного заказа изменит остальные. ruff отметил только сам изменяемый дефолт, последствия здесь.",
+        "suggestion": "def add(self, order_id, amount, tags=None):\n    tags = [*(tags or []), \"new\"]"
+      },
+      {
+        "line": 30,
+        "end_line": null,
+        "severity": "bug",
+        "title": "Страница пропускает первый заказ",
+        "detail": "Срез начинается с `start + 1`, поэтому первый элемент каждой страницы теряется, а на странице оказывается `size - 1` заказов. Для `number=0` клиент никогда не увидит самый старый заказ.",
+        "suggestion": "return items[start : start + size]"
+      }
+    ],
+    "dropped": 0
+  },
+  "lint": [
+    {
+      "tool": "ruff",
+      "line": 2,
+      "column": 8,
+      "code": "F401",
+      "message": "`os` imported but unused"
+    },
+    {
+      "tool": "ruff",
+      "line": 12,
+      "column": 13,
+      "code": "SIM115",
+      "message": "Use a context manager for opening files"
+    },
+    {
+      "tool": "ruff",
+      "line": 18,
+      "column": 42,
+      "code": "B006",
+      "message": "Do not use mutable data structures for argument defaults"
+    },
+    {
+      "tool": "ty",
+      "line": 37,
+      "column": 16,
+      "code": "no-matching-overload",
+      "message": "No overload of function `round` matches arguments"
+    }
+  ],
+  "reasoning": [
+    {
+      "n": 1,
+      "at_ms": 0,
+      "kind": "thought",
+      "text": "Файл небольшой, 43 строки: класс `OrderStore` с загрузкой, добавлением, постраничной выдачей и суммой, плюс функция экспорта. Сначала соберу вывод линтеров, чтобы не дублировать стиль и опечатки типов.",
+      "truncated": false
+    },
+    {
+      "n": 2,
+      "at_ms": 140,
+      "kind": "tool_call",
+      "tool": "run_ruff",
+      "args": {
+        "path": "orders.py"
+      }
+    },
+    {
+      "n": 3,
+      "at_ms": 1210,
+      "kind": "tool_result",
+      "tool": "run_ruff",
+      "text": "2:8 F401 `os` imported but unused\n12:13 SIM115 Use a context manager for opening files\n18:42 B006 Do not use mutable data structures for argument defaults",
+      "truncated": false
+    },
+    {
+      "n": 4,
+      "at_ms": 1380,
+      "kind": "tool_call",
+      "tool": "run_ty",
+      "args": {
+        "path": "orders.py"
+      }
+    },
+    {
+      "n": 5,
+      "at_ms": 3950,
+      "kind": "tool_result",
+      "tool": "run_ty",
+      "text": "error[no-matching-overload]: No overload of function `round` matches arguments\n  --> orders.py:37:16\n   |\n37 |         return round(result, \"2\")\n   |                ^^^^^^^^^^^^^^^^^^\ninfo: First overload defined here\n    --> stdlib/builtins.pyi:4751:1\n     |\n4751 | / @overload\n4752 | | def round(number: _SupportsRound1[_T], ndigits: None = None) -> _T:\n4753 | |     \"\"\"Round a number to a given precision in decimal digits.\n4754 | |\n4755 | |     The return value is an integer if ndigits is omitted or None.\n4756 | |     Otherwise the return value has the same type as the number.  ndigits\n4757 | |     may be negative.\n4758 | |     \"\"\"\n     | |_______^ First overload defined here\ninfo: Possible overloads for function `round`:\ninfo:   [_T](number: _SupportsRound1[_T], ndigits: None = None) -> _T\ninfo:   [_T](number: _SupportsRound2[_T], ndigits: SupportsIndex) -> _T\n\nFound 1 diagnostic",
+      "truncated": false
+    },
+    {
+      "n": 6,
+      "at_ms": 9820,
+      "kind": "thought",
+      "text": "Линтеры закрыли импорт, `round`, открытие файла без `with` и сам факт изменяемого значения по умолчанию. Мне важнее последствия. В `add` список `tags` по умолчанию общий для всех вызовов, и `append` в строке 19 его мутирует: заказы будут делить один объект. Это ошибка поведения, а не стиля, её стоит описать отдельно.",
+      "truncated": false
+    },
+    {
+      "n": 7,
+      "at_ms": 15240,
+      "kind": "thought",
+      "text": "Проверяю границы в `page`: `start = number * size`, срез `items[start + 1 : start + size]`. Для `number=0, size=20` получится элементы 1..19, то есть 19 заказов и без самого первого. Классическая ошибка на единицу. `export` выглядит корректно.",
+      "truncated": false
+    },
+    {
+      "n": 8,
+      "at_ms": 21460,
+      "kind": "conclusion",
+      "text": "Две ошибки поведения: общий список тегов и потеря первого заказа на странице. Импорт, открытие файла без `with` и `round` покрывают ruff и ty.",
+      "truncated": false
+    }
+  ],
+  "model": {
+    "provider": "gigachat",
+    "name": "GigaChat-2"
+  },
+  "usage": {
+    "tokens": 7340,
+    "tool_calls": 2,
+    "duration_ms": 22850,
+    "truncated": false
+  },
+  "demo_source": "import json\nimport os\nfrom datetime import datetime\n\n\nclass OrderStore:\n    def __init__(self, path):\n        self.path = path\n        self.orders = {}\n\n    def load(self):\n        f = open(self.path, encoding=\"utf-8\")\n        data = json.load(f)\n        for raw in data:\n            self.orders[raw[\"id\"]] = raw\n        return len(self.orders)\n\n    def add(self, order_id, amount, tags=[]):\n        tags.append(\"new\")\n        self.orders[order_id] = {\n            \"id\": order_id,\n            \"amount\": amount,\n            \"tags\": tags,\n            \"created\": datetime.now().isoformat(),\n        }\n\n    def page(self, number, size=20):\n        items = sorted(self.orders.values(), key=lambda o: o[\"created\"])\n        start = number * size\n        return items[start + 1 : start + size]\n\n    def total(self, currency: str) -> float:\n        result = 0\n        for order in self.orders.values():\n            if order.get(\"currency\", \"RUB\") == currency:\n                result += order[\"amount\"]\n        return round(result, \"2\")\n\n\ndef export(store, target):\n    with open(target, \"w\", encoding=\"utf-8\") as out:\n        json.dump(list(store.orders.values()), out, ensure_ascii=False)\n    print(f\"exported to {target}\")\n"
+}
