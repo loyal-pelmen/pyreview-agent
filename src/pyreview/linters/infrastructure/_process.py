@@ -29,11 +29,16 @@ async def read_capped(
 ) -> bytes | None:
     data = bytearray()
     while chunk := await stream.read(1 << 16):
-        data += chunk
+        if len(data) <= OUTPUT_LIMIT:
+            data += chunk
         if len(data) > OUTPUT_LIMIT:
             kill_group(process)
-            return None
-    return bytes(data)
+    return None if len(data) > OUTPUT_LIMIT else bytes(data)
+
+
+async def drain(stream: asyncio.StreamReader) -> None:
+    while await stream.read(1 << 16):
+        pass
 
 
 async def run_linter(
@@ -73,7 +78,11 @@ async def run_linter(
     finally:
         if process.returncode is None:
             kill_group(process)
-            await process.wait()
+            await asyncio.gather(
+                drain(cast(asyncio.StreamReader, process.stdout)),
+                drain(cast(asyncio.StreamReader, process.stderr)),
+                process.wait(),
+            )
     if stdout is None or stderr is None:
         return LintRun(tool, (), error="Вывод линтера слишком большой.")
     if process.returncode not in (0, 1):
